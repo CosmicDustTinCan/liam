@@ -60,11 +60,13 @@ export const RelatedTables: FC<Props> = ({ table }) => {
       stickyTopHeight={123}
       // NOTE: 360px is the height of the content
       contentMaxHeight={360}
-      additionalButtons=<IconButton
-        icon={<GotoIcon />}
-        tooltipContent="Open in main area"
-        onClick={handleClick}
-      />
+      additionalButtons={
+        <IconButton
+          icon={<GotoIcon />}
+          tooltipContent="Open in main area"
+          onClick={handleClick}
+        />
+      }
     >
       <div className={styles.outerWrapper}>
         <div className={styles.contentWrapper}>
