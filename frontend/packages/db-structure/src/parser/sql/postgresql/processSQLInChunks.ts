@@ -1,38 +1,101 @@
+import type { ProcessError } from '../../errors.js'
+
 /**
- * Processes a large SQL input string in chunks, ensuring that each chunk ends with a complete SQL statement.
+ * Processes a large SQL input string in chunks (by line count)
  *
- * @param input - The large SQL input string to be processed.
- * @param chunkSize - The number of lines to include in each chunk.
- * @param callback - An asynchronous callback function to process each chunk of SQL statements.
+ * @param sqlInput - The SQL input string to be processed.
+ * @param chunkSize - The number of lines per chunk (e.g., 500).
+ * @param callback - An asynchronous function to process each chunk.
  */
 export const processSQLInChunks = async (
-  input: string,
+  sqlInput: string,
   chunkSize: number,
-  callback: (chunk: string) => Promise<void>,
-): Promise<void> => {
-  const semicolon = ';'
-  // Even though the parser can handle "--", we remove such lines for ease of splitting by semicolons.
-  const lines = input.split('\n').filter((line) => !line.startsWith('--'))
+  callback: (
+    chunk: string,
+  ) => Promise<[number | null, number | null, ProcessError[]]>,
+): Promise<ProcessError[]> => {
+  if (sqlInput === '') return []
+  const lines = sqlInput.split('\n')
+  let currentChunkSize = 0
+  const processErrors: ProcessError[] = []
 
-  let partialStmt = ''
-
-  for (let i = 0; i < lines.length; i += chunkSize) {
-    const chunk = lines.slice(i, i + chunkSize).join('\n')
-    const combined = partialStmt + chunk
-
-    const lastSemicolonIndex = combined.lastIndexOf(semicolon)
-    if (lastSemicolonIndex === -1) {
-      partialStmt = combined
-      continue
+  for (let i = 0; i < lines.length; ) {
+    if (processErrors.length > 0) break
+    currentChunkSize = chunkSize
+    enum RetryDirection {
+      Decrease = -1, // Shrinking mode
+      Increase = 1, // Expanding mode
     }
+    let retryDirection: RetryDirection = RetryDirection.Decrease
 
-    const parseablePart = combined.slice(0, lastSemicolonIndex + 1)
-    partialStmt = combined.slice(lastSemicolonIndex + 1)
-    await callback(parseablePart)
+    while (true) {
+      // NOTE: To minimize unnecessary retries, avoid increasing currentChunkSize excessively,
+      //       especially when errorOffset is present.
+      if (retryDirection === RetryDirection.Decrease) {
+        if (i + currentChunkSize > lines.length) {
+          currentChunkSize = lines.length - i
+        }
+      }
+
+      const chunk = lines.slice(i, i + currentChunkSize).join('\n')
+      const [errorOffset, readOffset, errors] = await callback(chunk)
+
+      if (errorOffset !== null) {
+        if (retryDirection === RetryDirection.Decrease) {
+          currentChunkSize--
+          if (currentChunkSize === 0) {
+            retryDirection = RetryDirection.Increase
+            currentChunkSize = chunkSize
+          }
+        } else if (retryDirection === RetryDirection.Increase) {
+          currentChunkSize++
+          // NOTE: No further progress can be made in this case, so break.
+          if (i + currentChunkSize > lines.length) {
+            processErrors.push(...errors)
+            break
+          }
+          // NOTE: Prevent excessive memory usage. If currentChunkSize exceeds twice the original chunkSize, return an error.
+          //       The factor of 2 is arbitrary and can be adjusted in the future if necessary.
+          if (currentChunkSize > chunkSize * 2) {
+            processErrors.push(...errors)
+            break
+          }
+        }
+      } else if (readOffset !== null) {
+        const lineNumber = getLineNumber(chunk, readOffset)
+        if (lineNumber === null) {
+          throw new Error('UnexpectedCondition')
+        }
+        i += lineNumber
+        break
+      } else {
+        i += currentChunkSize
+        break
+      }
+    }
   }
 
-  // Process the last remaining statement.
-  if (partialStmt.trim()) {
-    await callback(partialStmt)
+  return processErrors
+}
+
+/**
+ * Determines the line number in a string corresponding to a given character index.
+ *
+ * @param inputString - The string to search within.
+ * @param charIndex - The character index.
+ * @returns The line number, or null if the index is out of bounds.
+ */
+function getLineNumber(inputString: string, charIndex: number): number | null {
+  if (charIndex < 0 || charIndex >= inputString.length) return null
+
+  let lineNumber = 1
+  let currentIndex = 0
+
+  for (const char of inputString) {
+    if (currentIndex === charIndex) return lineNumber
+    if (char === '\n') lineNumber++
+    currentIndex++
   }
+
+  return null
 }
