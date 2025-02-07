@@ -91,11 +91,15 @@ export const OpenedMobileToolbar: FC<Props> = ({
 
       <div className={styles.showMode}>
         <div className={styles.text}>show</div>
-        <button type="button" onClick={toggleShowModeMenu} className={styles.showModeMenuButton}>
-            {showModeLabel}
-            <div className={styles.cheveron}>
-              <ChevronDown color="var(--global-foreground, #fff)" />
-            </div>
+        <button
+          type="button"
+          onClick={toggleShowModeMenu}
+          className={styles.showModeMenuButton}
+        >
+          {showModeLabel}
+          <div className={styles.cheveron}>
+            <ChevronDown color="var(--global-foreground, #fff)" />
+          </div>
         </button>
       </div>
 

@@ -14,7 +14,11 @@ export const ShowModeMenu: FC<Props> = ({
 }) => {
   return (
     <div className={styles.wrapper}>
-      <button type="button" onClick={toggleShowModeMenu} className={styles.backButton}>
+      <button
+        type="button"
+        onClick={toggleShowModeMenu}
+        className={styles.backButton}
+      >
         <div className={styles.cheveron}>
           <ChevronLeft size={12} color="var(--global-foreground, #fff)" />
         </div>
