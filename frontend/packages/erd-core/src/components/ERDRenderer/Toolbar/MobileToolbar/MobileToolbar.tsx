@@ -67,7 +67,11 @@ export const MobileToolbar: FC = () => {
               !isOpen ? clsx(styles.active, styles.ellipsis) : styles.hidden,
             )}
           >
-            <button type="button" onClick={toggleOpenClose}>
+            <button
+              type="button"
+              onClick={toggleOpenClose}
+              aria-label="Open toolbar"
+            >
               <Ellipsis color="var(--global-foreground)" />
             </button>
           </div>

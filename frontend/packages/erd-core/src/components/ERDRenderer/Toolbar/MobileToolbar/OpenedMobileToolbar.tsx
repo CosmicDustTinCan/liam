@@ -70,7 +70,12 @@ export const OpenedMobileToolbar: FC<Props> = ({
           onClick={handleClickZoomIn}
           className={styles.menuButton}
         >
-          <IconButton size="sm" icon={<Plus />} tooltipContent="Zoom In">
+          <IconButton
+            size="sm"
+            icon={<Plus />}
+            tooltipContent="Zoom In"
+            aria-label="Zoom in"
+          >
             Zoom in
           </IconButton>
         </ToolbarButton>
@@ -79,13 +84,22 @@ export const OpenedMobileToolbar: FC<Props> = ({
           onClick={handleClickZoomOut}
           className={styles.menuButton}
         >
-          <IconButton size="sm" icon={<Minus />} tooltipContent="Zoom Out">
+          <IconButton
+            size="sm"
+            icon={<Minus />}
+            tooltipContent="Zoom Out"
+            aria-label="Zoom out"
+          >
             Zoom out
           </IconButton>
         </ToolbarButton>
 
-        <FitviewButton size="sm">Zoom to Fit</FitviewButton>
-        <TidyUpButton size="sm">Tidy up</TidyUpButton>
+        <FitviewButton size="sm" aria-label="Zoom to fit">
+          Zoom to Fit
+        </FitviewButton>
+        <TidyUpButton size="sm" aria-label="Tidy up">
+          Tidy up
+        </TidyUpButton>
       </div>
       <hr className={styles.divider} />
 
