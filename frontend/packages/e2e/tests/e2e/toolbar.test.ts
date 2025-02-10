@@ -89,4 +89,58 @@ test.describe('Mobile Toolbar', () => {
       Number.parseInt(zoomLevelAfter),
     )
   })
+
+  test.describe('Show Mode', () => {
+    type ShowModeTest = {
+      mode: string
+      expectedColumns: string[]
+    }
+
+    const showModeTests: ShowModeTest[] = [
+      {
+        mode: 'Table Name',
+        expectedColumns: [],
+      },
+      {
+        mode: 'Key Only',
+        expectedColumns: ['idbigserial', 'account_idbigint'],
+      },
+      {
+        mode: 'All Fields',
+        expectedColumns: [
+          'idbigserial',
+          'account_idbigint',
+          'titlevarchar',
+          'created_attimestamp',
+          'updated_attimestamp',
+          'replies_policyinteger',
+          'exclusiveboolean',
+        ],
+      },
+    ]
+
+    test.beforeEach(async ({ page }) => {
+      const showModeButton = page.getByRole('button', {
+        name: 'Show mode',
+      })
+      await showModeButton.click()
+    })
+
+    for (const { mode, expectedColumns } of showModeTests) {
+      test(`Show Mode: ${mode}`, async ({ page }) => {
+        const modeButton = page.getByRole('radio', {
+          name: mode,
+        })
+        await modeButton.click()
+
+        const tableNode = page.getByRole('button', {
+          name: 'lists table',
+          exact: true,
+        })
+
+        const columns = tableNode.getByRole('listitem')
+        await expect(columns).toHaveText(expectedColumns)
+      })
+    }
+  })
 })

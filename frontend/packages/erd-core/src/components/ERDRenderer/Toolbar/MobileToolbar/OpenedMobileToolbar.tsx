@@ -109,6 +109,7 @@ export const OpenedMobileToolbar: FC<Props> = ({
           type="button"
           onClick={toggleShowModeMenu}
           className={styles.showModeMenuButton}
+          aria-label="Show mode"
         >
           {showModeLabel}
           <div className={styles.cheveron}>
