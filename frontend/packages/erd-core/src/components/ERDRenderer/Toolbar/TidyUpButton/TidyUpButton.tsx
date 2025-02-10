@@ -22,11 +22,12 @@ export const TidyUpButton: FC<TidyUpButtonProps> = ({
   children = '',
   size = 'md',
 }) => {
-  const { getNodes, getEdges } = useReactFlow()
+  const { getNodes, getEdges, setNodes, fitView } = useReactFlow()
   const { handleLayout } = useAutoLayout()
   const { showMode } = useUserEditingStore()
   const { version } = useVersion()
-  const handleClick = useCallback(() => {
+
+  const handleClick = useCallback(async () => {
     toolbarActionLogEvent({
       element: 'tidyUp',
       showMode,
@@ -35,8 +36,11 @@ export const TidyUpButton: FC<TidyUpButtonProps> = ({
       ver: version.version,
       appEnv: version.envName,
     })
-    handleLayout(getNodes(), getEdges())
-  }, [handleLayout, showMode, getNodes, getEdges, version])
+
+    const { nodes } = await handleLayout(getNodes(), getEdges())
+    setNodes(nodes)
+    fitView()
+  }, [handleLayout, showMode, getNodes, getEdges, setNodes, fitView, version])
 
   return (
     <ToolbarButton asChild className={styles.menuButton}>

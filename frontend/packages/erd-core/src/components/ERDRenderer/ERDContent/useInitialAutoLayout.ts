@@ -9,7 +9,7 @@ import {
   getShowModeFromUrl,
 } from '@/utils'
 import { type Node, useReactFlow } from '@xyflow/react'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useERDContentContext } from './ERDContentContext'
 import { highlightNodesAndEdges } from './highlightNodesAndEdges'
 import { useAutoLayout } from './useAutoLayout'
@@ -25,51 +25,73 @@ export const useInitialAutoLayout = (
         .some((node) => node.measured),
     [nodes],
   )
-  const { getEdges } = useReactFlow()
+  const { getEdges, setNodes, setEdges, fitView } = useReactFlow()
+  const {
+    actions: { setLoading, setInitializeComplete },
+  } = useERDContentContext()
 
   const {
     state: { initializeComplete },
   } = useERDContentContext()
   const { handleLayout } = useAutoLayout()
 
-  useEffect(() => {
-    const initialize = async () => {
-      if (initializeComplete) {
-        return
-      }
+  const initialize = useCallback(async () => {
+    if (initializeComplete) {
+      return
+    }
 
-      const activeTableName = getActiveTableNameFromUrl()
-      updateActiveTableName(activeTableName)
-      const hiddenNodeIds = await getHiddenNodeIdsFromUrl()
-      addHiddenNodeIds(hiddenNodeIds)
-      const edges = getEdges()
-      const hiddenNodes = nodes.map((node) => ({
+    const activeTableName = getActiveTableNameFromUrl()
+    updateActiveTableName(activeTableName)
+
+    const hiddenNodeIds = await getHiddenNodeIdsFromUrl()
+    addHiddenNodeIds(hiddenNodeIds)
+
+    const showMode = getShowModeFromUrl()
+    updateShowMode(showMode)
+
+    if (tableNodesInitialized) {
+      setLoading(true)
+      const updatedNodes = nodes.map((node) => ({
         ...node,
         hidden: hiddenNodeIds.includes(node.id),
       }))
-      const { nodes: updatedNodes, edges: updatedEdges } =
-        highlightNodesAndEdges(hiddenNodes, edges, { activeTableName })
 
-      const fitViewOptions =
-        shouldFitViewToActiveTable && activeTableName
-          ? { maxZoom: 1, duration: 300, nodes: [{ id: activeTableName }] }
-          : undefined
-
-      const showMode = getShowModeFromUrl()
-      updateShowMode(showMode)
-
-      if (tableNodesInitialized) {
-        handleLayout(updatedNodes, updatedEdges, fitViewOptions)
-      }
+      const { nodes: highlightedNodes, edges: highlightedEdges } =
+        highlightNodesAndEdges(updatedNodes, getEdges(), {
+          activeTableName,
+        })
+      const { nodes: layoutedNodes, edges: layoutedEdges } = await handleLayout(
+        highlightedNodes,
+        highlightedEdges,
+      )
+      setNodes(layoutedNodes)
+      setEdges(layoutedEdges)
+      setInitializeComplete(true)
     }
-
-    initialize()
   }, [
-    tableNodesInitialized,
-    initializeComplete,
-    handleLayout,
     nodes,
     getEdges,
-    shouldFitViewToActiveTable,
+    setNodes,
+    setEdges,
+    handleLayout,
+    setLoading,
+    setInitializeComplete,
+    initializeComplete,
+    tableNodesInitialized,
   ])
+
+  useEffect(() => {
+    if (initializeComplete) {
+      const fitViewOptions = shouldFitViewToActiveTable
+        ? { duration: 300 }
+        : undefined
+
+      fitView(fitViewOptions)
+      setLoading(false)
+    }
+  }, [initializeComplete, shouldFitViewToActiveTable, setLoading, fitView])
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 }

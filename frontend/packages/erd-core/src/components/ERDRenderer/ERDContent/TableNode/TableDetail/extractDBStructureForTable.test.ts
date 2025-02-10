@@ -1,7 +1,7 @@
 import type { DBStructure } from '@liam-hq/db-structure'
 import { aColumn, aRelationship, aTable } from '@liam-hq/db-structure'
 import { describe, expect, it } from 'vitest'
-import { extractDBStructureForTable } from './extractDBStructureForTable'
+import { extractDBStructureForTable } from '../extractDBStructureForTable'
 
 describe(extractDBStructureForTable, () => {
   const users = aTable({

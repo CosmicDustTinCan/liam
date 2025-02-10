@@ -1,5 +1,11 @@
-import { clickLogEvent } from '@/features/gtm/utils'
+import { convertDBStructureToNodes } from '@/components/ERDRenderer/convertDBStructureToNodes'
+import { clickLogEvent, openRelatedTablesLogEvent } from '@/features/gtm/utils'
 import { useVersion } from '@/providers'
+import {
+  replaceHiddenNodeIds,
+  updateActiveTableName,
+  useDBStructureStore,
+} from '@/stores'
 import type { Table } from '@liam-hq/db-structure'
 import {
   DrawerClose,
@@ -8,20 +14,33 @@ import {
   Table2 as Table2Icon,
   XIcon,
 } from '@liam-hq/ui'
-import type { FC } from 'react'
+import { useReactFlow } from '@xyflow/react'
+import { type FC, useCallback } from 'react'
+import { useAutoLayout } from '../../useAutoLayout'
 import { Columns } from './Columns'
 import { Comment } from './Comment'
 import { Indices } from './Indices'
 import { RelatedTables } from './RelatedTables'
 import styles from './TableDetail.module.css'
 import { Unique } from './Unique'
+import { extractDBStructureForTable } from './extractDBStructureForTable'
 
 type Props = {
   table: Table
 }
 
 export const TableDetail: FC<Props> = ({ table }) => {
+  const dbStructure = useDBStructureStore()
+  const extractedDBStructure = extractDBStructureForTable(table, dbStructure)
+  const { nodes, edges } = convertDBStructureToNodes({
+    dbStructure: extractedDBStructure,
+    showMode: 'TABLE_NAME',
+  })
+
+  const { getNodes, getEdges, setNodes, setEdges, fitView } = useReactFlow()
+  const { handleLayout } = useAutoLayout()
   const { version } = useVersion()
+
   const handleDrawerClose = () => {
     clickLogEvent({
       element: 'closeTableDetailButton',
@@ -31,6 +50,47 @@ export const TableDetail: FC<Props> = ({ table }) => {
       appEnv: version.envName,
     })
   }
+
+  const handleOpenMainPane = useCallback(async () => {
+    const visibleNodeIds: string[] = nodes.map((node) => node.id)
+    const mainPaneNodes = getNodes()
+    const hiddenNodeIds = mainPaneNodes
+      .filter((node) => !visibleNodeIds.includes(node.id))
+      .map((node) => node.id)
+    const updatedNodes = mainPaneNodes.map((node) => ({
+      ...node,
+      hidden: hiddenNodeIds.includes(node.id),
+    }))
+
+    replaceHiddenNodeIds(hiddenNodeIds)
+    updateActiveTableName(undefined)
+
+    const { nodes: layoutedNodes, edges: layoutedEdges } = await handleLayout(
+      updatedNodes,
+      getEdges(),
+    )
+    setNodes(layoutedNodes)
+    setEdges(layoutedEdges)
+    fitView()
+
+    openRelatedTablesLogEvent({
+      tableId: table.name,
+      platform: version.displayedOn,
+      gitHash: version.gitHash,
+      ver: version.version,
+      appEnv: version.envName,
+    })
+  }, [
+    nodes,
+    table,
+    version,
+    getNodes,
+    getEdges,
+    setNodes,
+    setEdges,
+    handleLayout,
+    fitView,
+  ])
 
   return (
     <section className={styles.wrapper}>
@@ -55,7 +115,12 @@ export const TableDetail: FC<Props> = ({ table }) => {
         <Indices indices={table.indices} />
         <Unique columns={table.columns} />
         <div className={styles.relatedTables}>
-          <RelatedTables key={table.name} table={table} />
+          <RelatedTables
+            key={table.name}
+            nodes={nodes}
+            edges={edges}
+            onOpenMainPane={handleOpenMainPane}
+          />
         </div>
       </div>
     </section>
