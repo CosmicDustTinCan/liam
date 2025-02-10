@@ -1,4 +1,5 @@
 import { toolbarActionLogEvent } from '@/features/gtm/utils'
+import { useCustomReactflow } from '@/features/reactflow/hooks'
 import { useVersion } from '@/providers'
 import { useUserEditingStore } from '@/stores'
 import { IconButton, TidyUpIcon } from '@liam-hq/ui'
@@ -22,7 +23,8 @@ export const TidyUpButton: FC<TidyUpButtonProps> = ({
   children = '',
   size = 'md',
 }) => {
-  const { getNodes, getEdges, setNodes, fitView } = useReactFlow()
+  const { getNodes, getEdges, setNodes } = useReactFlow()
+  const { fitView } = useCustomReactflow()
   const { handleLayout } = useAutoLayout()
   const { showMode } = useUserEditingStore()
   const { version } = useVersion()

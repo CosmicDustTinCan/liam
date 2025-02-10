@@ -1,5 +1,6 @@
 import { selectTableLogEvent } from '@/features/gtm/utils'
 import { repositionTableLogEvent } from '@/features/gtm/utils/repositionTableLogEvent'
+import { MAX_ZOOM, MIN_ZOOM } from '@/features/reactflow/constants'
 import { useVersion } from '@/providers'
 import { updateActiveTableName, useUserEditingActiveStore } from '@/stores'
 import { isTouchDevice } from '@/utils'
@@ -149,8 +150,8 @@ export const ERDContentInner: FC<Props> = ({
         edgeTypes={edgeTypes}
         edgesFocusable={false}
         edgesReconnectable={false}
-        minZoom={0.1}
-        maxZoom={2}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={(_, node) => handleNodeClick(node.id)}

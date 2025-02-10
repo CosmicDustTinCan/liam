@@ -1,12 +1,12 @@
+import { useCustomReactflow } from '@/features/reactflow/hooks'
 import { useUserEditingStore } from '@/stores'
-import { useReactFlow } from '@xyflow/react'
 import { useEffect } from 'react'
 
 export const useFitViewWhenActiveTableChange = (enabled: boolean) => {
   const {
     active: { tableName },
   } = useUserEditingStore()
-  const { fitView } = useReactFlow()
+  const { fitView } = useCustomReactflow()
 
   useEffect(() => {
     if (!enabled || !tableName) return

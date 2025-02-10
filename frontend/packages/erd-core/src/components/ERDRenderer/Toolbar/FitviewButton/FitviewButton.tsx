@@ -1,9 +1,9 @@
 import { toolbarActionLogEvent } from '@/features/gtm/utils'
+import { useCustomReactflow } from '@/features/reactflow/hooks'
 import { useVersion } from '@/providers'
 import { useUserEditingStore } from '@/stores'
 import { IconButton, Scan } from '@liam-hq/ui'
 import { ToolbarButton } from '@radix-ui/react-toolbar'
-import { useReactFlow } from '@xyflow/react'
 import {
   type ComponentProps,
   type FC,
@@ -21,7 +21,7 @@ export const FitviewButton: FC<FitviewButtonProps> = ({
   children = '',
   size = 'md',
 }) => {
-  const { fitView } = useReactFlow()
+  const { fitView } = useCustomReactflow()
   const { showMode } = useUserEditingStore()
   const { version } = useVersion()
 

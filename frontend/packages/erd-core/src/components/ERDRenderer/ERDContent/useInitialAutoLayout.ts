@@ -1,3 +1,4 @@
+import { useCustomReactflow } from '@/features/reactflow/hooks'
 import {
   addHiddenNodeIds,
   updateActiveTableName,
@@ -25,7 +26,8 @@ export const useInitialAutoLayout = (
         .some((node) => node.measured),
     [nodes],
   )
-  const { getEdges, setNodes, setEdges, fitView } = useReactFlow()
+  const { getEdges, setNodes, setEdges } = useReactFlow()
+  const { fitView } = useCustomReactflow()
   const {
     actions: { setLoading, setInitializeComplete },
   } = useERDContentContext()
@@ -66,7 +68,14 @@ export const useInitialAutoLayout = (
       )
       setNodes(layoutedNodes)
       setEdges(layoutedEdges)
+
+      const fitViewOptions = shouldFitViewToActiveTable
+        ? { duration: 300 }
+        : undefined
+      fitView(fitViewOptions)
+
       setInitializeComplete(true)
+      setLoading(false)
     }
   }, [
     nodes,
@@ -76,20 +85,11 @@ export const useInitialAutoLayout = (
     handleLayout,
     setLoading,
     setInitializeComplete,
+    fitView,
     initializeComplete,
     tableNodesInitialized,
+    shouldFitViewToActiveTable,
   ])
-
-  useEffect(() => {
-    if (initializeComplete) {
-      const fitViewOptions = shouldFitViewToActiveTable
-        ? { duration: 300 }
-        : undefined
-
-      fitView(fitViewOptions)
-      setLoading(false)
-    }
-  }, [initializeComplete, shouldFitViewToActiveTable, setLoading, fitView])
 
   useEffect(() => {
     initialize()

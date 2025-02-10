@@ -1,5 +1,6 @@
 import { convertDBStructureToNodes } from '@/components/ERDRenderer/convertDBStructureToNodes'
 import { clickLogEvent, openRelatedTablesLogEvent } from '@/features/gtm/utils'
+import { useCustomReactflow } from '@/features/reactflow/hooks'
 import { useVersion } from '@/providers'
 import {
   replaceHiddenNodeIds,
@@ -37,7 +38,8 @@ export const TableDetail: FC<Props> = ({ table }) => {
     showMode: 'TABLE_NAME',
   })
 
-  const { getNodes, getEdges, setNodes, setEdges, fitView } = useReactFlow()
+  const { getNodes, getEdges, setNodes, setEdges } = useReactFlow()
+  const { fitView } = useCustomReactflow()
   const { handleLayout } = useAutoLayout()
   const { version } = useVersion()
 
